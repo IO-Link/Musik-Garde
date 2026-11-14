@@ -35,14 +35,16 @@
 
             <!-- Now Playing Section -->
             <section class="now-playing">
-                <div class="album-art">
-                    <div class="album-placeholder">♪</div>
-                </div>
-                <div class="song-info">
-                    <h2 id="currentTitle">Keine Musik geladen</h2>
-                    <p id="currentFilename" class="filename"></p>
-                    <div class="time-display">
-                        <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+                <div class="now-playing-content">
+                    <div class="song-info">
+                        <h2 id="currentTitle">Keine Musik geladen</h2>
+                        <p id="currentFilename" class="filename"></p>
+                        <div class="time-display">
+                            <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+                        </div>
+                    </div>
+                    <div class="album-art-small">
+                        <div class="album-placeholder">♪</div>
                     </div>
                 </div>
             </section>
@@ -68,21 +70,21 @@
                 <span id="volumeValue">70%</span>
             </section>
 
-            <!-- Autoplay Toggle -->
-            <section class="autoplay-section">
-                <label class="autoplay-label">
-                    <input type="checkbox" id="autoplayToggle" checked>
-                    <span class="toggle-switch"></span>
-                    <span class="toggle-label">Autoplay bei Auswahl</span>
-                </label>
-            </section>
-
             <!-- Playlist Section -->
             <section class="playlist-section">
                 <h3>Playlist</h3>
                 <div id="playlist" class="playlist">
                     <p class="empty-message">Keine Dateien importiert</p>
                 </div>
+            </section>
+
+            <!-- Autoplay Toggle -->
+            <section class="autoplay-section">
+                <label class="autoplay-label">
+                    <input type="checkbox" id="autoplayToggle" checked>
+                    <span class="toggle-switch"></span>
+                    <span class="toggle-label">Autoplay</span>
+                </label>
             </section>
         </main>
     </div>

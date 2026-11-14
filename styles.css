@@ -134,45 +134,56 @@ main {
     background: var(--secondary);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 20px;
-    text-align: center;
+    padding: 12px;
+    text-align: left;
 }
 
-.album-art {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 16px;
-    border-radius: 8px;
+.now-playing-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.song-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.album-art-small {
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
     background: linear-gradient(135deg, var(--accent), #0f3460);
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .album-placeholder {
-    font-size: 60px;
+    font-size: 36px;
     opacity: 0.8;
 }
 
 #currentTitle {
-    font-size: 18px;
-    margin-bottom: 8px;
+    font-size: 16px;
+    margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .filename {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .time-display {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
 }
 
@@ -277,7 +288,7 @@ main {
     background: var(--secondary);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 16px;
+    padding: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -286,7 +297,7 @@ main {
 .autoplay-label {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     cursor: pointer;
     user-select: none;
 }
@@ -296,10 +307,10 @@ main {
 }
 
 .toggle-switch {
-    width: 50px;
-    height: 28px;
+    width: 44px;
+    height: 24px;
     background: var(--border);
-    border-radius: 14px;
+    border-radius: 12px;
     position: relative;
     transition: all 0.3s ease;
     flex-shrink: 0;
@@ -308,8 +319,8 @@ main {
 .toggle-switch::after {
     content: '';
     position: absolute;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     background: var(--text);
     border-radius: 50%;
     top: 2px;
@@ -322,11 +333,11 @@ main {
 }
 
 .autoplay-label input[type="checkbox"]:checked + .toggle-switch::after {
-    left: 24px;
+    left: 20px;
 }
 
 .toggle-label {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text);
 }
 
