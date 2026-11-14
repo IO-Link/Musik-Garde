@@ -1,6 +1,7 @@
 // Music Player App - Musik Garde
 // Updated: Fix autoplay OFF behavior - loadedTrackIndex reset on stop
 // Test clone from GitHub Desktop - Nov 14, 2026
+// Latest sync test - Files copied from local folder to git repo
 
 class MusicPlayer {
     constructor() {
@@ -9,9 +10,8 @@ class MusicPlayer {
         this.currentTrackIndex = 0;
         this.isPlaying = false;
         this.draggingIndex = null;
-        this.fileCache = {}; // Cache blob URLs in memory
+        this.fileCache = {};
 
-        // UI Elements
         this.selectFilesBtn = document.getElementById('selectFilesBtn');
         this.fileInput = document.getElementById('fileInput');
         this.fileCount = document.getElementById('fileCount');
@@ -31,7 +31,8 @@ class MusicPlayer {
 
         this.isMuted = false;
         this.previousVolume = 70;
-        this.autoplay = true; // Default to enabled
+        this.autoplay = true;
+        this.db = null;
         this.loadedTrackIndex = -1; // Track which song is loaded in audio
 
         this.init();
@@ -40,17 +41,34 @@ class MusicPlayer {
     init() {
         this.initializeDB().then(() => {
             this.loadPlaylistFromStorage();
-            this.loadAutoplaySetting();
             this.setupEventListeners();
+            this.loadAutoplaySetting();
             this.renderPlaylist();
             
-            // Restore files from DB and then load track
+            // Restore files from DB
             this.restoreFilesFromDB().then(() => {
                 if (this.playlist.length > 0) {
                     this.loadTrack(0);
                 }
                 this.registerServiceWorker();
             });
+        });
+    }
+
+    initializeDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open('MusicGardeDB', 1);
+            request.onerror = () => resolve();
+            request.onsuccess = () => {
+                this.db = request.result;
+                resolve();
+            };
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains('files')) {
+                    db.createObjectStore('files', { keyPath: 'filename' });
+                }
+            };
         });
     }
 
@@ -64,7 +82,7 @@ class MusicPlayer {
             const promises = this.playlist.map(track => 
                 this.getFileFromDB(track.filename).then(blobUrl => {
                     this.fileCache[track.filename] = blobUrl;
-                    console.log('Restored from DB:', track.filename);
+                    console.log('Restored:', track.filename);
                 }).catch(err => {
                     console.log('File not in DB:', track.filename);
                 })
@@ -74,56 +92,27 @@ class MusicPlayer {
         });
     }
 
-    initializeDB() {
-        return new Promise((resolve) => {
-            const request = indexedDB.open('MusicGardeDB', 1);
-
-            request.onerror = () => {
-                console.error('IndexedDB failed, continuing without persistence');
-                resolve();
-            };
-
-            request.onsuccess = () => {
-                this.db = request.result;
-                resolve();
-            };
-
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains('files')) {
-                    db.createObjectStore('files', { keyPath: 'filename' });
-                }
-            };
-        });
-    }
-
     setupEventListeners() {
-        // File selection
         this.selectFilesBtn.addEventListener('click', () => this.fileInput.click());
         this.fileInput.addEventListener('change', (e) => this.handleFileSelection(e));
 
-        // Playback controls
         this.playBtn.addEventListener('click', () => this.play());
         this.pauseBtn.addEventListener('click', () => this.pause());
         this.stopBtn.addEventListener('click', () => this.stop());
         this.prevBtn.addEventListener('click', () => this.previous());
         this.nextBtn.addEventListener('click', () => this.next());
 
-        // Volume control
         this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
         this.muteBtn.addEventListener('click', () => this.toggleMute());
 
-        // Autoplay toggle
         document.getElementById('autoplayToggle').addEventListener('change', (e) => {
             this.autoplay = e.target.checked;
             localStorage.setItem('musikGardeAutoplay', JSON.stringify(this.autoplay));
             console.log('Autoplay:', this.autoplay);
         });
 
-        // Progress bar
         this.progressBar.addEventListener('input', (e) => this.seek(e.target.value));
 
-        // Audio events
         this.audioPlayer.addEventListener('timeupdate', () => this.updateProgressBar());
         this.audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
         this.audioPlayer.addEventListener('ended', () => this.next());
@@ -139,27 +128,20 @@ class MusicPlayer {
 
     handleFileSelection(event) {
         const files = Array.from(event.target.files);
-        console.log('Selected files:', files);
-        
-        // Filter for MP3 files only
         const mp3Files = files.filter(file => 
             file.type === 'audio/mpeg' || file.name.toLowerCase().endsWith('.mp3')
         );
-
-        console.log('MP3 files after filter:', mp3Files);
 
         if (mp3Files.length === 0) {
             alert('Bitte wählen Sie MP3-Dateien aus');
             return;
         }
 
-        // Add new files to existing playlist
         mp3Files.forEach(file => {
-            // Create blob URL and cache it
             const blobUrl = URL.createObjectURL(file);
             this.fileCache[file.name] = blobUrl;
             
-            // Save to IndexedDB for persistence
+            // Save to IndexedDB
             if (this.db) {
                 this.saveFileToDB(file);
             }
@@ -179,7 +161,6 @@ class MusicPlayer {
         this.savePlaylistMetadataToStorage();
         this.renderPlaylist();
         
-        // Load first track if nothing is loaded yet
         if (this.currentTrackIndex === 0 && !this.audioPlayer.src) {
             this.loadTrack(0);
         }
@@ -200,9 +181,8 @@ class MusicPlayer {
                 };
                 
                 store.put(fileData);
-                console.log('Saved to IndexedDB:', file.name);
             } catch (e) {
-                console.error('Error saving to IndexedDB:', e);
+                console.error('Error saving to DB:', e);
             }
         };
         reader.readAsArrayBuffer(file);
@@ -211,7 +191,7 @@ class MusicPlayer {
     getFileFromDB(filename) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
-                reject('IndexedDB not available');
+                reject('No DB');
                 return;
             }
             
@@ -226,34 +206,20 @@ class MusicPlayer {
                         const blobUrl = URL.createObjectURL(blob);
                         resolve(blobUrl);
                     } else {
-                        reject('File not found');
+                        reject('Not found');
                     }
                 };
                 
-                request.onerror = () => reject('DB read failed');
+                request.onerror = () => reject('Read error');
             } catch (e) {
                 reject(e);
             }
         });
     }
 
-    deleteFileFromDB(filename) {
-        if (!this.db) return;
-        
-        try {
-            const transaction = this.db.transaction(['files'], 'readwrite');
-            const store = transaction.objectStore('files');
-            store.delete(filename);
-            console.log('Deleted from IndexedDB:', filename);
-        } catch (e) {
-            console.error('Error deleting from IndexedDB:', e);
-        }
-    }
-
     extractMetadata(file, index) {
-        // Only extract if jsmediatags library is available
         if (typeof jsmediatags === 'undefined') {
-            console.log('jsmediatags library not loaded, using filename as title');
+            console.log('jsmediatags not loaded');
             return;
         }
 
@@ -262,56 +228,21 @@ class MusicPlayer {
                 const tags = tag.tags;
                 const track = this.playlist[index];
 
-                if (tags.artist) {
-                    track.artist = tags.artist;
-                }
-                if (tags.title) {
-                    track.title = tags.title;
-                }
-                if (tags.year) {
-                    track.year = tags.year;
-                }
+                if (tags.artist) track.artist = tags.artist;
+                if (tags.title) track.title = tags.title;
+                if (tags.year) track.year = tags.year;
 
-                // Update UI if this is current track
                 if (index === this.currentTrackIndex) {
                     this.updateNowPlaying();
                 }
 
-                // Save to storage
                 this.savePlaylistMetadataToStorage();
-
-                // Re-render playlist to show updated metadata
                 this.renderPlaylist();
             },
             onError: (error) => {
-                console.log('Error reading metadata for', file.name, error);
-                // File is still playable, just without metadata
+                console.log('Error reading metadata:', file.name);
             }
         });
-    }
-
-    savePlaylistMetadataToStorage() {
-        // Save ONLY metadata to localStorage (not the actual files)
-        const metadata = this.playlist.map(track => ({
-            filename: track.filename,
-            artist: track.artist,
-            title: track.title,
-            year: track.year
-        }));
-        localStorage.setItem('musikGardePlaylist', JSON.stringify(metadata));
-    }
-
-    loadPlaylistFromStorage() {
-        const stored = localStorage.getItem('musikGardePlaylist');
-        if (stored) {
-            try {
-                this.playlist = JSON.parse(stored);
-                console.log('Loaded playlist metadata:', this.playlist.length, 'tracks');
-            } catch (e) {
-                console.error('Error loading playlist:', e);
-                this.playlist = [];
-            }
-        }
     }
 
     updateFileCount() {
@@ -328,7 +259,6 @@ class MusicPlayer {
         }
 
         this.playlistContainer.innerHTML = this.playlist.map((track, index) => {
-            // Use filename if artist is empty
             const artist = track.artist && track.artist !== 'Unbekannter Künstler' ? track.artist : '';
             const displayText = artist
                 ? (track.year 
@@ -336,7 +266,6 @@ class MusicPlayer {
                     : `${artist} - ${track.title}`)
                 : track.title || track.filename;
             
-            // Remove .mp3 extension from filename display
             const filenameDisplay = track.filename.replace(/\.mp3$/i, '');
             
             return `
@@ -354,31 +283,31 @@ class MusicPlayer {
             `;
         }).join('');
 
-        // Add click handlers for playing
         this.playlistContainer.querySelectorAll('.playlist-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                // Don't play if clicking delete button or drag handle
                 if (e.target.classList.contains('playlist-item-delete') || 
                     e.target.classList.contains('playlist-item-drag-handle')) {
                     return;
                 }
                 const index = parseInt(item.dataset.index);
-                this.loadTrack(index);
+                
                 if (this.autoplay) {
+                    // Autoplay ON: Load and play immediately
+                    this.loadTrack(index);
                     this.play();
+                } else {
+                    // Autoplay OFF: Just select the song (don't update UI, don't load)
+                    this.currentTrackIndex = index;
+                    this.updatePlaylistUI(); // Just highlight in playlist
                 }
             });
-        });
 
-        // Add drag and drop handlers
-        this.playlistContainer.querySelectorAll('.playlist-item').forEach(item => {
             item.addEventListener('dragstart', (e) => this.handleDragStart(e));
             item.addEventListener('dragover', (e) => this.handleDragOver(e));
             item.addEventListener('drop', (e) => this.handleDrop(e));
             item.addEventListener('dragend', (e) => this.handleDragEnd(e));
         });
 
-        // Add delete handlers
         this.playlistContainer.querySelectorAll('.playlist-item-delete').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -408,12 +337,10 @@ class MusicPlayer {
         const dropIndex = parseInt(e.target.closest('.playlist-item').dataset.index);
         
         if (this.draggingIndex !== null && this.draggingIndex !== dropIndex) {
-            // Reorder playlist
             const draggedTrack = this.playlist[this.draggingIndex];
             this.playlist.splice(this.draggingIndex, 1);
             this.playlist.splice(dropIndex, 0, draggedTrack);
 
-            // Update current track index if needed
             if (this.currentTrackIndex === this.draggingIndex) {
                 this.currentTrackIndex = dropIndex;
             } else if (this.draggingIndex < this.currentTrackIndex && dropIndex >= this.currentTrackIndex) {
@@ -438,14 +365,20 @@ class MusicPlayer {
     deleteTrack(index) {
         if (confirm(`"${this.playlist[index].title}" löschen?`)) {
             const filename = this.playlist[index].filename;
-            
-            // Clear from cache and DB
             delete this.fileCache[filename];
-            this.deleteFileFromDB(filename);
+            
+            // Delete from DB
+            if (this.db) {
+                try {
+                    const transaction = this.db.transaction(['files'], 'readwrite');
+                    transaction.objectStore('files').delete(filename);
+                } catch (e) {
+                    console.error('Error deleting from DB:', e);
+                }
+            }
             
             this.playlist.splice(index, 1);
             
-            // Adjust current track index
             if (index === this.currentTrackIndex) {
                 if (this.playlist.length > 0) {
                     this.currentTrackIndex = Math.min(index, this.playlist.length - 1);
@@ -471,7 +404,6 @@ class MusicPlayer {
         this.loadedTrackIndex = index; // Mark this track as loaded
         const track = this.playlist[index];
         
-        // Use cached blob URL
         const blobUrl = this.fileCache[track.filename];
         
         if (blobUrl) {
@@ -481,14 +413,22 @@ class MusicPlayer {
             this.updateDuration();
             this.updateNowPlaying();
         } else {
-            console.error('File not in cache:', track.filename);
-            alert('Musikdatei nicht verfügbar. Bitte erneut importieren.');
+            // File not in cache yet, try to get from DB
+            this.getFileFromDB(track.filename).then(blobUrl => {
+                this.fileCache[track.filename] = blobUrl;
+                this.audioPlayer.src = blobUrl;
+                this.updatePlaylistUI();
+                this.resetProgressBar();
+                this.updateDuration();
+                this.updateNowPlaying();
+            }).catch(err => {
+                console.error('File not available:', track.filename);
+            });
         }
     }
 
     updateNowPlaying() {
         const track = this.playlist[this.currentTrackIndex];
-        // Use filename as artist if artist is empty
         const artist = track.artist && track.artist !== 'Unbekannter Künstler' ? track.artist : '';
         const displayText = artist
             ? (track.year 
@@ -496,7 +436,6 @@ class MusicPlayer {
                 : `${artist} - ${track.title}`)
             : track.title || track.filename;
         
-        // Remove .mp3 extension from filename display
         const filenameDisplay = track.filename.replace(/\.mp3$/i, '');
         
         this.currentTitle.textContent = displayText;
@@ -512,7 +451,7 @@ class MusicPlayer {
     play() {
         console.log('Play clicked, selected:', this.currentTrackIndex, 'loaded:', this.loadedTrackIndex);
         if (this.playlist.length === 0) {
-            alert('Bitte importieren Sie zuerst MP3-Dateien');
+            alert('Bitte importieren Sie MP3-Dateien');
             return;
         }
         
@@ -525,7 +464,7 @@ class MusicPlayer {
         }
         
         this.audioPlayer.play().catch(err => {
-            console.error('Fehler beim Abspielen:', err);
+            console.error('Play error:', err);
         });
     }
 
@@ -543,30 +482,18 @@ class MusicPlayer {
 
     next() {
         if (this.playlist.length === 0) return;
-        
         let nextIndex = this.currentTrackIndex + 1;
-        if (nextIndex >= this.playlist.length) {
-            nextIndex = 0; // Loop to beginning
-        }
-        
+        if (nextIndex >= this.playlist.length) nextIndex = 0;
         this.loadTrack(nextIndex);
-        if (this.isPlaying) {
-            this.play();
-        }
+        if (this.isPlaying) this.play();
     }
 
     previous() {
         if (this.playlist.length === 0) return;
-        
         let prevIndex = this.currentTrackIndex - 1;
-        if (prevIndex < 0) {
-            prevIndex = this.playlist.length - 1; // Loop to end
-        }
-        
+        if (prevIndex < 0) prevIndex = this.playlist.length - 1;
         this.loadTrack(prevIndex);
-        if (this.isPlaying) {
-            this.play();
-        }
+        if (this.isPlaying) this.play();
     }
 
     seek(percentage) {
@@ -589,13 +516,11 @@ class MusicPlayer {
 
     toggleMute() {
         if (this.isMuted) {
-            // Unmute
             this.audioPlayer.volume = this.previousVolume / 100;
             this.volumeSlider.value = this.previousVolume;
             this.volumeValue.textContent = `${this.previousVolume}%`;
             this.isMuted = false;
         } else {
-            // Mute
             this.previousVolume = this.volumeSlider.value;
             this.audioPlayer.volume = 0;
             this.volumeValue.textContent = '0%';
@@ -620,7 +545,6 @@ class MusicPlayer {
             const percentage = (this.audioPlayer.currentTime / duration) * 100;
             this.progressBar.value = percentage;
         }
-
         this.currentTime.textContent = this.formatTime(this.audioPlayer.currentTime);
     }
 
@@ -645,29 +569,12 @@ class MusicPlayer {
 
     formatTime(seconds) {
         if (!isFinite(seconds)) return '0:00';
-        
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
-    resetProgressBar() {
-        this.progressBar.value = 0;
-        this.currentTime.textContent = '0:00';
-    }
-
-    updatePlayButton() {
-        if (this.isPlaying) {
-            this.playBtn.disabled = true;
-            this.pauseBtn.disabled = false;
-        } else {
-            this.playBtn.disabled = false;
-            this.pauseBtn.disabled = true;
-        }
-    }
-
     savePlaylistMetadataToStorage() {
-        // Save ONLY metadata to localStorage (not the actual files)
         const metadata = this.playlist.map(track => ({
             filename: track.filename,
             artist: track.artist,
@@ -682,7 +589,6 @@ class MusicPlayer {
         if (stored) {
             try {
                 this.playlist = JSON.parse(stored);
-                console.log('Loaded playlist metadata:', this.playlist.length, 'tracks');
             } catch (e) {
                 console.error('Error loading playlist:', e);
                 this.playlist = [];
@@ -697,7 +603,7 @@ class MusicPlayer {
                 this.autoplay = JSON.parse(stored);
                 document.getElementById('autoplayToggle').checked = this.autoplay;
             } catch (e) {
-                console.error('Error loading autoplay setting:', e);
+                console.error('Error loading autoplay:', e);
             }
         }
     }
@@ -706,12 +612,11 @@ class MusicPlayer {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
                 .then(reg => console.log('Service Worker registered'))
-                .catch(err => console.log('Service Worker registration failed:', err));
+                .catch(err => console.log('SW error:', err));
         }
     }
 }
 
-// Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     new MusicPlayer();
 });
