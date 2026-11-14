@@ -134,7 +134,7 @@ header h1 {
     width: 16px;
     height: 16px;
     background: var(--light);
-    border-radius: 2px;
+    border-radius: 50%;
     top: 2px;
     left: 2px;
     transition: all 0.3s ease;
@@ -484,19 +484,25 @@ header h1 {
 }
 
 .playlist-item-delete {
-    background: #ff6b6b;
-    color: white;
+    background: none;
+    color: var(--primary);
     border: none;
-    padding: 6px 10px;
-    border-radius: 0;
+    padding: 0;
+    width: 24px;
+    height: 24px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
     margin-left: 10px;
-    transition: background 0.2s ease;
 }
 
 .playlist-item-delete:hover {
-    background: #ff5252;
+    background: rgba(0, 212, 255, 0.2);
+    color: #ff6b6b;
 }
 
 /* ===== RESPONSIVE ===== */
