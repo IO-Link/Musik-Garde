@@ -286,37 +286,6 @@ class MusicPlayer {
             }
         });
     }
-            onSuccess: (tag) => {
-                const tags = tag.tags;
-                const track = this.playlist[index];
-
-                if (tags.artist) {
-                    track.artist = tags.artist;
-                }
-                if (tags.title) {
-                    track.title = tags.title;
-                }
-                if (tags.year) {
-                    track.year = tags.year;
-                }
-
-                // Update UI if this is current track
-                if (index === this.currentTrackIndex) {
-                    this.updateNowPlaying();
-                }
-
-                // Save to storage
-                this.savePlaylistMetadataToStorage();
-
-                // Re-render playlist to show updated metadata
-                this.renderPlaylist();
-            },
-            onError: (error) => {
-                console.log('Error reading metadata for', file.name, error);
-                // File is still playable, just without metadata
-            }
-        });
-    }
 
     savePlaylistMetadataToStorage() {
         // Save ONLY metadata to localStorage (not the actual files)
