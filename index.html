@@ -19,18 +19,27 @@
 <body>
     <div class="container">
         <header>
-            <h1>♪ Musik Garde</h1>
+            <div class="header-top">
+                <img id="clubLogo" src="" alt="Club Logo" class="club-logo" style="display: none;">
+                <h1>Musik Garde</h1>
+            </div>
             <p class="subtitle">Lokaler MP3 Player</p>
         </header>
 
         <main>
-            <!-- File Import Section -->
-            <section class="import-section">
+            <!-- File Import & Autoplay Section (one line) -->
+            <section class="import-autoplay-section">
                 <input type="file" id="fileInput" multiple accept=".mp3,audio/mpeg" style="display: none;">
                 <button class="btn btn-primary" id="selectFilesBtn">
                     📁 Musik importieren
                 </button>
                 <p class="file-count" id="fileCount"></p>
+                
+                <label class="autoplay-label">
+                    <input type="checkbox" id="autoplayToggle" checked>
+                    <span class="toggle-switch"></span>
+                    <span class="toggle-label">Autoplay</span>
+                </label>
             </section>
 
             <!-- Now Playing Section -->
@@ -56,16 +65,16 @@
 
             <!-- Playback Controls -->
             <section class="controls">
-                <button class="btn btn-control" id="prevBtn" title="Zurück">⏮️</button>
-                <button class="btn btn-control" id="playBtn" title="Abspielen">▶️</button>
-                <button class="btn btn-control" id="pauseBtn" title="Pausieren">⏸️</button>
-                <button class="btn btn-control" id="stopBtn" title="Stopp">⏹️</button>
-                <button class="btn btn-control" id="nextBtn" title="Weiter">⏭️</button>
+                <button class="btn btn-prev" id="prevBtn" title="Zurück">⏮️</button>
+                <button class="btn btn-play" id="playBtn" title="Abspielen">▶️</button>
+                <button class="btn btn-pause" id="pauseBtn" title="Pausieren">⏸️</button>
+                <button class="btn btn-stop" id="stopBtn" title="Stopp">⏹️</button>
+                <button class="btn btn-next" id="nextBtn" title="Weiter">⏭️</button>
             </section>
 
             <!-- Volume Control -->
             <section class="volume-section">
-                <button class="btn btn-icon" id="muteBtn" title="Stummschalten">🔊</button>
+                <button class="btn btn-mute" id="muteBtn" title="Stummschalten">🔊</button>
                 <input type="range" id="volumeSlider" min="0" max="100" value="70" class="volume-slider">
                 <span id="volumeValue">70%</span>
             </section>
@@ -76,15 +85,6 @@
                 <div id="playlist" class="playlist">
                     <p class="empty-message">Keine Dateien importiert</p>
                 </div>
-            </section>
-
-            <!-- Autoplay Toggle -->
-            <section class="autoplay-section">
-                <label class="autoplay-label">
-                    <input type="checkbox" id="autoplayToggle" checked>
-                    <span class="toggle-switch"></span>
-                    <span class="toggle-label">Autoplay</span>
-                </label>
             </section>
         </main>
     </div>
