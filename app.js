@@ -1,4 +1,6 @@
 // Music Player App - Musik Garde
+// Updated: Fix autoplay OFF behavior - loadedTrackIndex reset on stop
+// Test clone from GitHub Desktop - Nov 14, 2026
 
 class MusicPlayer {
     constructor() {
@@ -30,6 +32,7 @@ class MusicPlayer {
         this.isMuted = false;
         this.previousVolume = 70;
         this.autoplay = true; // Default to enabled
+        this.loadedTrackIndex = -1; // Track which song is loaded in audio
 
         this.init();
     }
@@ -465,6 +468,7 @@ class MusicPlayer {
         if (index < 0 || index >= this.playlist.length) return;
 
         this.currentTrackIndex = index;
+        this.loadedTrackIndex = index; // Mark this track as loaded
         const track = this.playlist[index];
         
         // Use cached blob URL
@@ -506,10 +510,20 @@ class MusicPlayer {
     }
 
     play() {
+        console.log('Play clicked, selected:', this.currentTrackIndex, 'loaded:', this.loadedTrackIndex);
         if (this.playlist.length === 0) {
             alert('Bitte importieren Sie zuerst MP3-Dateien');
             return;
         }
+        
+        // If a different track is selected, load it
+        if (this.currentTrackIndex !== this.loadedTrackIndex) {
+            console.log('Track mismatch detected, loading track:', this.currentTrackIndex);
+            this.loadTrack(this.currentTrackIndex);
+        } else {
+            console.log('Track already loaded, resuming playback');
+        }
+        
         this.audioPlayer.play().catch(err => {
             console.error('Fehler beim Abspielen:', err);
         });
@@ -522,7 +536,9 @@ class MusicPlayer {
     stop() {
         this.audioPlayer.pause();
         this.audioPlayer.currentTime = 0;
+        this.loadedTrackIndex = -1; // Reset so next play() will load the selected track
         this.resetProgressBar();
+        console.log('Stop called, loadedTrackIndex reset to -1');
     }
 
     next() {
