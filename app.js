@@ -82,17 +82,55 @@ class MusicPlayer {
             return;
         }
 
-        // Create file objects with ObjectURLs
+        // Create file objects with ObjectURLs and extract metadata
         this.playlist = mp3Files.map(file => ({
-            name: file.name.replace(/\.mp3$/i, ''),
             file: file,
-            url: URL.createObjectURL(file)
+            url: URL.createObjectURL(file),
+            artist: 'Unbekannter Künstler',
+            title: file.name.replace(/\.mp3$/i, ''),
+            year: ''
         }));
+
+        // Extract metadata from all files
+        this.playlist.forEach((track, index) => {
+            this.extractMetadata(track.file, index);
+        });
 
         this.currentTrackIndex = 0;
         this.updateFileCount();
         this.renderPlaylist();
         this.loadTrack(0);
+    }
+
+    extractMetadata(file, index) {
+        jsmediatags.read(file, {
+            onSuccess: (tag) => {
+                const tags = tag.tags;
+                const track = this.playlist[index];
+
+                if (tags.artist) {
+                    track.artist = tags.artist;
+                }
+                if (tags.title) {
+                    track.title = tags.title;
+                }
+                if (tags.year) {
+                    track.year = tags.year;
+                }
+
+                // Update UI if this is current track
+                if (index === this.currentTrackIndex) {
+                    this.updateNowPlaying();
+                }
+
+                // Re-render playlist to show updated metadata
+                this.renderPlaylist();
+            },
+            onError: (error) => {
+                console.log('Error reading metadata for', file.name, error);
+                // File is still playable, just without metadata
+            }
+        });
     }
 
     updateFileCount() {
@@ -108,13 +146,19 @@ class MusicPlayer {
             return;
         }
 
-        this.playlistContainer.innerHTML = this.playlist.map((track, index) => `
-            <div class="playlist-item ${index === this.currentTrackIndex ? 'active' : ''}" 
-                 data-index="${index}">
-                <span class="playlist-item-number">${index + 1}</span>
-                <span class="playlist-item-name">${track.name}</span>
-            </div>
-        `).join('');
+        this.playlistContainer.innerHTML = this.playlist.map((track, index) => {
+            const displayText = track.year 
+                ? `${track.artist} - ${track.title} - ${track.year}`
+                : `${track.artist} - ${track.title}`;
+            
+            return `
+                <div class="playlist-item ${index === this.currentTrackIndex ? 'active' : ''}" 
+                     data-index="${index}">
+                    <span class="playlist-item-number">${index + 1}</span>
+                    <span class="playlist-item-name">${displayText}</span>
+                </div>
+            `;
+        }).join('');
 
         // Add click handlers
         this.playlistContainer.querySelectorAll('.playlist-item').forEach(item => {
@@ -133,11 +177,20 @@ class MusicPlayer {
         const track = this.playlist[index];
         
         this.audioPlayer.src = track.url;
-        this.currentTitle.textContent = track.name;
         
         this.updatePlaylistUI();
         this.resetProgressBar();
         this.updateDuration();
+        this.updateNowPlaying();
+    }
+
+    updateNowPlaying() {
+        const track = this.playlist[this.currentTrackIndex];
+        const displayText = track.year 
+            ? `${track.artist} - ${track.title} - ${track.year}`
+            : `${track.artist} - ${track.title}`;
+        
+        this.currentTitle.textContent = displayText;
     }
 
     updatePlaylistUI() {
