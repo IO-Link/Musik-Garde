@@ -45,8 +45,9 @@ header {
 
 .club-logo {
     width: 45px;
-    height: 45px;
+    height: 54px;
     border-radius: 0;
+    flex-shrink: 0;
 }
 
 header h1 {
