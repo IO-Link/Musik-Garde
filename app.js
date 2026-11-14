@@ -627,14 +627,6 @@ class MusicPlayer {
         }
     }
 
-    formatTime(seconds) {
-        if (!isFinite(seconds)) return '0:00';
-        
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-
     savePlaylistMetadataToStorage() {
         // Save ONLY metadata to localStorage (not the actual files)
         const metadata = this.playlist.map(track => ({
