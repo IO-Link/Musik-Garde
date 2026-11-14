@@ -726,14 +726,30 @@ class MusicPlayer {
     checkForUpdates() {
         if ('serviceWorker' in navigator) {
             const notificationEl = document.getElementById('updateNotification');
-            // Only show update if there's already a controller (not first visit)
-            if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (notificationEl) {
-                        notificationEl.style.display = 'block';
-                    }
+            
+            // Check for updates periodically
+            setInterval(() => {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(reg => {
+                        reg.update(); // Check for updates
+                    });
                 });
-            }
+            }, 60000); // Check every 60 seconds
+            
+            // Listen for controller change (new version installed)
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (notificationEl) {
+                    notificationEl.style.display = 'block';
+                    console.log('Update available - notification shown');
+                }
+            });
+            
+            // Also check on first load
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                registrations.forEach(reg => {
+                    reg.update();
+                });
+            });
         }
     }
 }
