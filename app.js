@@ -709,7 +709,7 @@ class MusicPlayer {
 
     registerServiceWorker() {
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
+            navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
                 .then(reg => console.log('Service Worker registered'))
                 .catch(err => console.log('SW error:', err));
         }
@@ -733,6 +733,15 @@ class MusicPlayer {
                     this._showUpdateNotification();
                 });
             }
+        }
+    }
+
+    _showUpdateNotification() {
+        const notificationEl = document.getElementById('updateNotification');
+        if (notificationEl) {
+            notificationEl.style.display = 'block';
+            notificationEl.style.cursor = 'pointer';
+            notificationEl.onclick = () => window.location.reload();
         }
     }
 }

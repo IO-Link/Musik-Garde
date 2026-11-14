@@ -1,5 +1,5 @@
 // Service Worker - Musik Garde PWA
-const CACHE_NAME = 'musik-garde-v3';
+const CACHE_NAME = 'musik-garde-v1.1.3';
 const urlsToCache = [
     './',
     './index.html',
@@ -59,35 +59,19 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Network-first: always try fresh files, fall back to cache when offline
     event.respondWith(
-        caches.match(event.request)
+        fetch(event.request, { cache: 'no-cache' })
             .then((response) => {
-                // Cache hit - return response
-                if (response) {
-                    return response;
-                }
-
-                return fetch(event.request).then((response) => {
-                    // Check if we received a valid response
-                    if (!response || response.status !== 200 || (response.type !== 'basic' && response.type !== 'cors')) {
-                        return response;
-                    }
-
-                    // Clone the response
+                if (response && response.status === 200 &&
+                    (response.type === 'basic' || response.type === 'cors')) {
                     const responseToCache = response.clone();
-
-                    // Cache the new response
-                    caches.open(CACHE_NAME)
-                        .then((cache) => {
-                            cache.put(event.request, responseToCache);
-                        });
-
-                    return response;
-                });
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseToCache);
+                    });
+                }
+                return response;
             })
-            .catch(() => {
-                // Network request failed, try to return a cached version
-                return caches.match(event.request);
-            })
+            .catch(() => caches.match(event.request))
     );
 });
