@@ -35,6 +35,23 @@ header {
     padding: 15px 0;
 }
 
+.update-notification {
+    background: #ff6b6b;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 10px;
+    border-radius: 4px;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
 .header-top {
     display: flex;
     align-items: center;
@@ -285,9 +302,10 @@ header h1 {
 }
 
 .time-display {
-    font-size: 12px;
+    font-size: 16px;
     color: var(--light);
     opacity: 0.8;
+    font-weight: 600;
 }
 
 .album-art-small {
@@ -565,4 +583,20 @@ header h1 {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #00b8cc;
+}
+
+
+/* ===== FOOTER ===== */
+.app-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+#appVersion {
+    font-size: 10px;
+    color: var(--light);
+    opacity: 0.5;
+    margin: 0;
 }
