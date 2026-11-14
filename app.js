@@ -735,15 +735,6 @@ class MusicPlayer {
             }
         }
     }
-            
-            // Also check on first load
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                registrations.forEach(reg => {
-                    reg.update();
-                });
-            });
-        }
-    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
