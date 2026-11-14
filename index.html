@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Lokaler MP3 Musik-Player">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Musik Garde">
+    
+    <title>Musik Garde - MP3 Player</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231a1a2e' width='192' height='192'/><text x='50%' y='50%' font-size='80' fill='%23e0e0e0' text-anchor='middle' dominant-baseline='central'>♪</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231a1a2e' width='192' height='192'/><text x='50%' y='50%' font-size='80' fill='%23e0e0e0' text-anchor='middle' dominant-baseline='central'>♪</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♪ Musik Garde</h1>
+            <p class="subtitle">Lokaler MP3 Player</p>
+        </header>
+
+        <main>
+            <!-- File Import Section -->
+            <section class="import-section">
+                <input type="file" id="fileInput" multiple accept=".mp3,audio/mpeg" style="display: none;">
+                <button class="btn btn-primary" id="selectFilesBtn">
+                    📁 Musik importieren
+                </button>
+                <p class="file-count" id="fileCount"></p>
+            </section>
+
+            <!-- Now Playing Section -->
+            <section class="now-playing">
+                <div class="album-art">
+                    <div class="album-placeholder">♪</div>
+                </div>
+                <div class="song-info">
+                    <h2 id="currentTitle">Keine Musik geladen</h2>
+                    <div class="time-display">
+                        <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <input type="range" id="progressBar" min="0" max="100" value="0" class="progress-bar">
+            </div>
+
+            <!-- Playback Controls -->
+            <section class="controls">
+                <button class="btn btn-control" id="prevBtn" title="Zurück">⏮️</button>
+                <button class="btn btn-control" id="playBtn" title="Abspielen">▶️</button>
+                <button class="btn btn-control" id="pauseBtn" title="Pausieren">⏸️</button>
+                <button class="btn btn-control" id="stopBtn" title="Stopp">⏹️</button>
+                <button class="btn btn-control" id="nextBtn" title="Weiter">⏭️</button>
+            </section>
+
+            <!-- Volume Control -->
+            <section class="volume-section">
+                <button class="btn btn-icon" id="muteBtn" title="Stummschalten">🔊</button>
+                <input type="range" id="volumeSlider" min="0" max="100" value="70" class="volume-slider">
+                <span id="volumeValue">70%</span>
+            </section>
+
+            <!-- Playlist Section -->
+            <section class="playlist-section">
+                <h3>Playlist</h3>
+                <div id="playlist" class="playlist">
+                    <p class="empty-message">Keine Dateien importiert</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Hidden audio element -->
+    <audio id="audioPlayer"></audio>
+
+    <script src="app.js"></script>
+</body>
+</html>
