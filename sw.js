@@ -1,11 +1,11 @@
 // Service Worker - Musik Garde PWA
-const CACHE_NAME = 'musik-garde-v1';
+const CACHE_NAME = 'musik-garde-v2';
 const urlsToCache = [
-    '.',
-    'index.html',
-    'styles.css',
-    'app.js',
-    'manifest.json'
+    './',
+    './index.html',
+    './styles.css',
+    './app.js',
+    './manifest.json'
 ];
 
 // Install event - cache all assets
