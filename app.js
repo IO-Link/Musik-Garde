@@ -48,17 +48,21 @@ class MusicPlayer {
             // Restore files from DB
             this.restoreFilesFromDB().then(() => {
                 if (this.playlist.length > 0) {
-                    this.loadTrack(0);
+                    this.loadTrack(0).then(() => {
+                        this.registerServiceWorker();
+                        this.checkForUpdates();
+                    });
+                } else {
+                    this.registerServiceWorker();
+                    this.checkForUpdates();
                 }
-                this.registerServiceWorker();
-                this.checkForUpdates();
             });
         });
     }
 
     initializeDB() {
         return new Promise((resolve) => {
-            const request = indexedDB.open('MusicGardeDB', 1);
+            const request = indexedDB.open('MusicGardeDB', 2);
             request.onerror = () => resolve();
             request.onsuccess = () => {
                 this.db = request.result;
@@ -66,9 +70,12 @@ class MusicPlayer {
             };
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
-                if (!db.objectStoreNames.contains('files')) {
-                    db.createObjectStore('files', { keyPath: 'id' });
+                // Delete old store if it exists
+                if (db.objectStoreNames.contains('files')) {
+                    db.deleteObjectStore('files');
                 }
+                // Create new store with 'id' as keyPath
+                db.createObjectStore('files', { keyPath: 'id' });
             };
         });
     }
@@ -117,7 +124,13 @@ class MusicPlayer {
         this.audioPlayer.addEventListener('timeupdate', () => this.updateProgressBar());
         this.audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
         this.audioPlayer.addEventListener('ended', () => {
-            this.autoplay ? this.next() : this.stop();
+            if (this.autoplay) {
+                // Load next track and play it immediately
+                this.next();
+            } else {
+                // Just stop, don't auto-advance
+                this.stop();
+            }
         });
         this.audioPlayer.addEventListener('play', () => {
             this.isPlaying = true;
@@ -410,14 +423,23 @@ class MusicPlayer {
 
     deleteTrack(index) {
         if (confirm(`"${this.playlist[index].title}" löschen?`)) {
-            const filename = this.playlist[index].filename;
+            const track = this.playlist[index];
+            const filename = track.filename;
             delete this.fileCache[filename];
             
-            // Delete from DB
+            // Delete from DB using compound key
             if (this.db) {
                 try {
                     const transaction = this.db.transaction(['files'], 'readwrite');
-                    transaction.objectStore('files').delete(filename);
+                    const store = transaction.objectStore('files');
+                    // Get all files and delete those matching filename
+                    const request = store.getAll();
+                    request.onsuccess = () => {
+                        const results = request.result.filter(item => item.filename === filename);
+                        results.forEach(item => {
+                            store.delete(item.id);
+                        });
+                    };
                 } catch (e) {
                     console.error('Error deleting from DB:', e);
                 }
@@ -444,33 +466,41 @@ class MusicPlayer {
     }
 
     loadTrack(index) {
-        if (index < 0 || index >= this.playlist.length) return;
+        return new Promise((resolve) => {
+            if (index < 0 || index >= this.playlist.length) {
+                resolve();
+                return;
+            }
 
-        this.currentTrackIndex = index;
-        this.loadedTrackIndex = index; // Mark this track as loaded
-        const track = this.playlist[index];
-        
-        const blobUrl = this.fileCache[track.filename];
-        
-        if (blobUrl) {
-            this.audioPlayer.src = blobUrl;
-            this.updatePlaylistUI();
-            this.resetProgressBar();
-            this.updateDuration();
-            this.updateNowPlaying();
-        } else {
-            // File not in cache yet, try to get from DB
-            this.getFileFromDB(track.filename).then(blobUrl => {
-                this.fileCache[track.filename] = blobUrl;
+            this.currentTrackIndex = index;
+            this.loadedTrackIndex = index; // Mark this track as loaded
+            const track = this.playlist[index];
+            
+            const blobUrl = this.fileCache[track.filename];
+            
+            if (blobUrl) {
                 this.audioPlayer.src = blobUrl;
                 this.updatePlaylistUI();
                 this.resetProgressBar();
                 this.updateDuration();
                 this.updateNowPlaying();
-            }).catch(err => {
-                console.error('File not available:', track.filename);
-            });
-        }
+                resolve();
+            } else {
+                // File not in cache yet, try to get from DB
+                this.getFileFromDB(track.filename).then(blobUrl => {
+                    this.fileCache[track.filename] = blobUrl;
+                    this.audioPlayer.src = blobUrl;
+                    this.updatePlaylistUI();
+                    this.resetProgressBar();
+                    this.updateDuration();
+                    this.updateNowPlaying();
+                    resolve();
+                }).catch(err => {
+                    console.error('File not available:', track.filename);
+                    resolve();
+                });
+            }
+        });
     }
 
     updateNowPlaying() {
@@ -501,14 +531,19 @@ class MusicPlayer {
             return;
         }
         
-        // If a different track is selected, load it
+        // If a different track is selected, load it first
         if (this.currentTrackIndex !== this.loadedTrackIndex) {
             console.log('Track mismatch detected, loading track:', this.currentTrackIndex);
-            this.loadTrack(this.currentTrackIndex);
+            this.loadTrack(this.currentTrackIndex).then(() => {
+                this._playAfterLoad();
+            });
         } else {
             console.log('Track already loaded, resuming playback');
+            this._playAfterLoad();
         }
-        
+    }
+
+    _playAfterLoad() {
         // Request Screen Wake Lock
         if (navigator.wakeLock) {
             navigator.wakeLock.request('screen')
@@ -554,16 +589,18 @@ class MusicPlayer {
         if (this.playlist.length === 0) return;
         let nextIndex = this.currentTrackIndex + 1;
         if (nextIndex >= this.playlist.length) nextIndex = 0;
-        this.loadTrack(nextIndex);
-        if (this.isPlaying) this.play();
+        this.loadTrack(nextIndex).then(() => {
+            if (this.isPlaying) this._playAfterLoad();
+        });
     }
 
     previous() {
         if (this.playlist.length === 0) return;
         let prevIndex = this.currentTrackIndex - 1;
         if (prevIndex < 0) prevIndex = this.playlist.length - 1;
-        this.loadTrack(prevIndex);
-        if (this.isPlaying) this.play();
+        this.loadTrack(prevIndex).then(() => {
+            if (this.isPlaying) this._playAfterLoad();
+        });
     }
 
     seek(percentage) {
