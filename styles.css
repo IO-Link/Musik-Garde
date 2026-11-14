@@ -189,48 +189,48 @@ header h1 {
 }
 
 .btn-prev {
-    background: var(--accent);
+    background: transparent;
     color: white;
 }
 
 .btn-prev:hover {
-    background: #1e2d4a;
+    background: transparent;
 }
 
 .btn-play {
-    background: var(--accent);
+    background: transparent;
     color: white;
 }
 
 .btn-play:hover {
-    background: #1e2d4a;
+    background: transparent;
 }
 
 .btn-pause {
-    background: var(--accent);
+    background: transparent;
     color: white;
 }
 
 .btn-pause:hover {
-    background: #1e2d4a;
+    background: transparent;
 }
 
 .btn-stop {
-    background: var(--accent);
+    background: transparent;
     color: white;
 }
 
 .btn-stop:hover {
-    background: #1e2d4a;
+    background: transparent;
 }
 
 .btn-next {
-    background: var(--accent);
+    background: transparent;
     color: white;
 }
 
 .btn-next:hover {
-    background: #1e2d4a;
+    background: transparent;
 }
 
 .btn-mute {
@@ -344,8 +344,8 @@ header h1 {
 }
 
 .btn {
-    padding: 12px 8px;
-    font-size: 20px;
+    padding: 16px 12px;
+    font-size: 28px;
 }
 
 /* ===== VOLUME SECTION ===== */
