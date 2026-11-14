@@ -627,6 +627,29 @@ class MusicPlayer {
         }
     }
 
+    formatTime(seconds) {
+        if (!isFinite(seconds)) return '0:00';
+        
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    resetProgressBar() {
+        this.progressBar.value = 0;
+        this.currentTime.textContent = '0:00';
+    }
+
+    updatePlayButton() {
+        if (this.isPlaying) {
+            this.playBtn.disabled = true;
+            this.pauseBtn.disabled = false;
+        } else {
+            this.playBtn.disabled = false;
+            this.pauseBtn.disabled = true;
+        }
+    }
+
     savePlaylistMetadataToStorage() {
         // Save ONLY metadata to localStorage (not the actual files)
         const metadata = this.playlist.map(track => ({
