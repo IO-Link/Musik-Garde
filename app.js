@@ -43,6 +43,7 @@ class MusicPlayer {
             this.loadPlaylistFromStorage();
             this.setupEventListeners();
             this.loadAutoplaySetting();
+            this.updateFileCount();
             this.renderPlaylist();
             
             // Restore files from DB
@@ -125,8 +126,8 @@ class MusicPlayer {
         this.audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
         this.audioPlayer.addEventListener('ended', () => {
             if (this.autoplay) {
-                // Load next track and play it immediately
-                this.next();
+                // Auto-advance to next track and play
+                this.next(true);
             } else {
                 // Just stop, don't auto-advance
                 this.stop();
@@ -281,11 +282,7 @@ class MusicPlayer {
 
         this.playlistContainer.innerHTML = this.playlist.map((track, index) => {
             const artist = track.artist && track.artist !== 'Unbekannter Künstler' ? track.artist : '';
-            const displayText = artist
-                ? (track.year 
-                    ? `${artist} - ${track.title} - ${track.year}`
-                    : `${artist} - ${track.title}`)
-                : track.title || track.filename;
+            const displayText = artist ? (track.year ? `${artist} - ${track.title} - ${track.year}` : `${artist} - ${track.title}`) : track.title || track.filename;
             
             const filenameDisplay = track.filename.replace(/\.mp3$/i, '');
             
@@ -506,14 +503,8 @@ class MusicPlayer {
     updateNowPlaying() {
         const track = this.playlist[this.currentTrackIndex];
         const artist = track.artist && track.artist !== 'Unbekannter Künstler' ? track.artist : '';
-        const displayText = artist
-            ? (track.year 
-                ? `${artist} - ${track.title} - ${track.year}`
-                : `${artist} - ${track.title}`)
-            : track.title || track.filename;
-        
+        const displayText = artist ? (track.year ? `${artist} - ${track.title} - ${track.year}` : `${artist} - ${track.title}`) : track.title || track.filename;
         const filenameDisplay = track.filename.replace(/\.mp3$/i, '');
-        
         this.currentTitle.textContent = displayText;
         document.getElementById('currentFilename').textContent = filenameDisplay;
     }
@@ -585,12 +576,13 @@ class MusicPlayer {
         console.log('Stop called, loadedTrackIndex reset to -1');
     }
 
-    next() {
+    next(forcePlay = false) {
         if (this.playlist.length === 0) return;
+        const shouldPlay = forcePlay || this.isPlaying;
         let nextIndex = this.currentTrackIndex + 1;
         if (nextIndex >= this.playlist.length) nextIndex = 0;
         this.loadTrack(nextIndex).then(() => {
-            if (this.isPlaying) this._playAfterLoad();
+            if (shouldPlay) this._playAfterLoad();
         });
     }
 
@@ -725,24 +717,24 @@ class MusicPlayer {
 
     checkForUpdates() {
         if ('serviceWorker' in navigator) {
-            const notificationEl = document.getElementById('updateNotification');
-            
-            // Check for updates periodically
+            // Check for updates every 30 seconds
             setInterval(() => {
                 navigator.serviceWorker.getRegistrations().then(registrations => {
                     registrations.forEach(reg => {
-                        reg.update(); // Check for updates
+                        console.log('Checking for updates...');
+                        reg.update();
                     });
                 });
-            }, 60000); // Check every 60 seconds
+            }, 30000);
             
-            // Listen for controller change (new version installed)
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (notificationEl) {
-                    notificationEl.style.display = 'block';
-                    console.log('Update available - notification shown');
-                }
-            });
+            // Only listen for controller change if there's already a controller (not first visit)
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    this._showUpdateNotification();
+                });
+            }
+        }
+    }
             
             // Also check on first load
             navigator.serviceWorker.getRegistrations().then(registrations => {
