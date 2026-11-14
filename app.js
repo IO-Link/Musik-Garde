@@ -615,11 +615,6 @@ class MusicPlayer {
                 .catch(err => console.log('SW error:', err));
         }
     }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    new MusicPlayer();
-});
 
     checkForUpdates() {
         if ('serviceWorker' in navigator) {
@@ -631,3 +626,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    new MusicPlayer();
+});
