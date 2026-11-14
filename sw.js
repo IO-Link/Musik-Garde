@@ -1,11 +1,11 @@
 // Service Worker - Musik Garde PWA
 const CACHE_NAME = 'musik-garde-v1';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/manifest.json'
+    '.',
+    'index.html',
+    'styles.css',
+    'app.js',
+    'manifest.json'
 ];
 
 // Install event - cache all assets
@@ -14,9 +14,16 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('Cache opened');
-                return cache.addAll(urlsToCache);
+                // Try to cache files, but don't fail if some are missing
+                return Promise.allSettled(
+                    urlsToCache.map(url => cache.add(url))
+                );
             })
             .then(() => self.skipWaiting())
+            .catch(err => {
+                console.log('Cache error during install:', err);
+                return self.skipWaiting();
+            })
     );
 });
 
