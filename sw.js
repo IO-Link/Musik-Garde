@@ -1,11 +1,12 @@
 // Service Worker - Musik Garde PWA
-const CACHE_NAME = 'musik-garde-v2';
+const CACHE_NAME = 'musik-garde-v3';
 const urlsToCache = [
     './',
     './index.html',
     './styles.css',
     './app.js',
-    './manifest.json'
+    './manifest.json',
+    './logo.png'
 ];
 
 // Install event - cache all assets
@@ -26,6 +27,7 @@ self.addEventListener('install', (event) => {
             })
     );
 });
+
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
@@ -60,7 +62,7 @@ self.addEventListener('fetch', (event) => {
 
                 return fetch(event.request).then((response) => {
                     // Check if we received a valid response
-                    if (!response || response.status !== 200 || response.type === 'basic') {
+                    if (!response || response.status !== 200 || (response.type !== 'basic' && response.type !== 'cors')) {
                         return response;
                     }
 

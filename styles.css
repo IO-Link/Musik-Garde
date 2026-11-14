@@ -352,16 +352,16 @@ header h1 {
 .progress-bar::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 22px;
+    height: 22px;
     background: var(--primary);
     border-radius: 50%;
     cursor: pointer;
 }
 
 .progress-bar::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+    width: 22px;
+    height: 22px;
     background: var(--primary);
     border-radius: 50%;
     cursor: pointer;
@@ -376,7 +376,7 @@ header h1 {
     margin: 15px 0;
 }
 
-.btn {
+.controls .btn {
     padding: 16px 12px;
     font-size: 28px;
 }
@@ -406,16 +406,16 @@ header h1 {
 .volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 22px;
+    height: 22px;
     background: var(--primary);
     border-radius: 50%;
     cursor: pointer;
 }
 
 .volume-slider::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+    width: 22px;
+    height: 22px;
     background: var(--primary);
     border-radius: 50%;
     cursor: pointer;
@@ -538,6 +538,30 @@ header h1 {
     color: #ff6b6b;
 }
 
+/* ===== REORDER BUTTONS ===== */
+.playlist-item-up,
+.playlist-item-down {
+    background: none;
+    color: var(--primary);
+    border: none;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    margin-left: 5px;
+}
+
+.playlist-item-up:hover,
+.playlist-item-down:hover {
+    background: rgba(0, 212, 255, 0.2);
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
     .header-top {
@@ -567,11 +591,11 @@ header h1 {
     }
 
     .now-playing-content {
-        flex-direction: column;
+        flex-direction: row;
     }
 
     .album-art-small {
-        margin: 10px auto 0;
+        display: none;
     }
 }
 

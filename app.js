@@ -33,6 +33,7 @@ class MusicPlayer {
         this.autoplay = true;
         this.db = null;
         this.loadedTrackIndex = -1; // Track which song is loaded in audio
+        this.wakeLock = null;
 
         this.init();
     }
@@ -66,7 +67,7 @@ class MusicPlayer {
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
                 if (!db.objectStoreNames.contains('files')) {
-                    db.createObjectStore('files', { keyPath: 'filename' });
+                    db.createObjectStore('files', { keyPath: 'id' });
                 }
             };
         });
@@ -115,7 +116,9 @@ class MusicPlayer {
 
         this.audioPlayer.addEventListener('timeupdate', () => this.updateProgressBar());
         this.audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
-        this.audioPlayer.addEventListener('ended', () => this.next());
+        this.audioPlayer.addEventListener('ended', () => {
+            this.autoplay ? this.next() : this.stop();
+        });
         this.audioPlayer.addEventListener('play', () => {
             this.isPlaying = true;
             this.updatePlayButton();
@@ -175,7 +178,9 @@ class MusicPlayer {
                 const transaction = this.db.transaction(['files'], 'readwrite');
                 const store = transaction.objectStore('files');
                 
+                const compoundKey = `${file.name}_${file.size}_${file.lastModified}`;
                 const fileData = {
+                    id: compoundKey,
                     filename: file.name,
                     data: reader.result
                 };
@@ -198,11 +203,14 @@ class MusicPlayer {
             try {
                 const transaction = this.db.transaction(['files'], 'readonly');
                 const store = transaction.objectStore('files');
-                const request = store.get(filename);
+                const request = store.getAll();
                 
                 request.onsuccess = () => {
-                    if (request.result && request.result.data) {
-                        const blob = new Blob([request.result.data], { type: 'audio/mpeg' });
+                    // Find the file by filename (most recent if multiple exist)
+                    const results = request.result.filter(item => item.filename === filename);
+                    if (results.length > 0) {
+                        const fileData = results[results.length - 1]; // Get most recent
+                        const blob = new Blob([fileData.data], { type: 'audio/mpeg' });
                         const blobUrl = URL.createObjectURL(blob);
                         resolve(blobUrl);
                     } else {
@@ -278,6 +286,8 @@ class MusicPlayer {
                         <span class="playlist-item-name">${displayText}</span>
                         <span class="playlist-item-filename">${filenameDisplay}</span>
                     </div>
+                    ${index > 0 ? `<button class="playlist-item-up" data-index="${index}" title="Nach oben">▲</button>` : '<span style="width:24px;"></span>'}
+                    ${index < this.playlist.length - 1 ? `<button class="playlist-item-down" data-index="${index}" title="Nach unten">▼</button>` : '<span style="width:24px;"></span>'}
                     <button class="playlist-item-delete" data-index="${index}" title="Löschen">✕</button>
                 </div>
             `;
@@ -286,6 +296,8 @@ class MusicPlayer {
         this.playlistContainer.querySelectorAll('.playlist-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 if (e.target.classList.contains('playlist-item-delete') || 
+                    e.target.classList.contains('playlist-item-up') ||
+                    e.target.classList.contains('playlist-item-down') ||
                     e.target.classList.contains('playlist-item-drag-handle')) {
                     return;
                 }
@@ -306,6 +318,40 @@ class MusicPlayer {
             item.addEventListener('dragover', (e) => this.handleDragOver(e));
             item.addEventListener('drop', (e) => this.handleDrop(e));
             item.addEventListener('dragend', (e) => this.handleDragEnd(e));
+        });
+
+        this.playlistContainer.querySelectorAll('.playlist-item-up').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const index = parseInt(btn.dataset.index);
+                if (index > 0) {
+                    [this.playlist[index], this.playlist[index - 1]] = [this.playlist[index - 1], this.playlist[index]];
+                    if (this.currentTrackIndex === index) {
+                        this.currentTrackIndex = index - 1;
+                    } else if (this.currentTrackIndex === index - 1) {
+                        this.currentTrackIndex = index;
+                    }
+                    this.savePlaylistMetadataToStorage();
+                    this.renderPlaylist();
+                }
+            });
+        });
+
+        this.playlistContainer.querySelectorAll('.playlist-item-down').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const index = parseInt(btn.dataset.index);
+                if (index < this.playlist.length - 1) {
+                    [this.playlist[index], this.playlist[index + 1]] = [this.playlist[index + 1], this.playlist[index]];
+                    if (this.currentTrackIndex === index) {
+                        this.currentTrackIndex = index + 1;
+                    } else if (this.currentTrackIndex === index + 1) {
+                        this.currentTrackIndex = index;
+                    }
+                    this.savePlaylistMetadataToStorage();
+                    this.renderPlaylist();
+                }
+            });
         });
 
         this.playlistContainer.querySelectorAll('.playlist-item-delete').forEach(btn => {
@@ -463,6 +509,18 @@ class MusicPlayer {
             console.log('Track already loaded, resuming playback');
         }
         
+        // Request Screen Wake Lock
+        if (navigator.wakeLock) {
+            navigator.wakeLock.request('screen')
+                .then(wakeLock => {
+                    this.wakeLock = wakeLock;
+                    console.log('Screen Wake Lock acquired');
+                })
+                .catch(err => {
+                    console.log('Wake Lock error:', err);
+                });
+        }
+        
         this.audioPlayer.play().catch(err => {
             console.error('Play error:', err);
         });
@@ -470,6 +528,12 @@ class MusicPlayer {
 
     pause() {
         this.audioPlayer.pause();
+        if (this.wakeLock) {
+            this.wakeLock.release().catch(err => {
+                console.log('Wake Lock release error:', err);
+            });
+            this.wakeLock = null;
+        }
     }
 
     stop() {
@@ -477,6 +541,12 @@ class MusicPlayer {
         this.audioPlayer.currentTime = 0;
         this.loadedTrackIndex = -1; // Reset so next play() will load the selected track
         this.resetProgressBar();
+        if (this.wakeLock) {
+            this.wakeLock.release().catch(err => {
+                console.log('Wake Lock release error:', err);
+            });
+            this.wakeLock = null;
+        }
         console.log('Stop called, loadedTrackIndex reset to -1');
     }
 
@@ -619,11 +689,14 @@ class MusicPlayer {
     checkForUpdates() {
         if ('serviceWorker' in navigator) {
             const notificationEl = document.getElementById('updateNotification');
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (notificationEl) {
-                    notificationEl.style.display = 'block';
-                }
-            });
+            // Only show update if there's already a controller (not first visit)
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (notificationEl) {
+                        notificationEl.style.display = 'block';
+                    }
+                });
+            }
         }
     }
 }
