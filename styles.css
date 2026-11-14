@@ -38,14 +38,14 @@ header {
 .header-top {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 15px;
     margin-bottom: 5px;
 }
 
 .club-logo {
-    width: 100px;
-    height: 100px;
+    width: 70px;
+    height: 70px;
     border-radius: 0;
     flex-shrink: 0;
     object-fit: contain;
