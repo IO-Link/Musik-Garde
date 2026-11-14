@@ -188,49 +188,49 @@ header h1 {
     background: #00b8cc;
 }
 
-.btn-play {
-    background: #00d4ff;
-    color: var(--dark);
-}
-
-.btn-play:hover {
-    background: #00b8cc;
-}
-
-.btn-pause {
-    background: #ffa500;
-    color: white;
-}
-
-.btn-pause:hover {
-    background: #ff8c00;
-}
-
-.btn-stop {
-    background: #ff6b6b;
-    color: white;
-}
-
-.btn-stop:hover {
-    background: #ff5252;
-}
-
 .btn-prev {
-    background: #6c5ce7;
+    background: var(--accent);
     color: white;
 }
 
 .btn-prev:hover {
-    background: #5f4dd4;
+    background: #1e2d4a;
+}
+
+.btn-play {
+    background: var(--accent);
+    color: white;
+}
+
+.btn-play:hover {
+    background: #1e2d4a;
+}
+
+.btn-pause {
+    background: var(--accent);
+    color: white;
+}
+
+.btn-pause:hover {
+    background: #1e2d4a;
+}
+
+.btn-stop {
+    background: var(--accent);
+    color: white;
+}
+
+.btn-stop:hover {
+    background: #1e2d4a;
 }
 
 .btn-next {
-    background: #a29bfe;
+    background: var(--accent);
     color: white;
 }
 
 .btn-next:hover {
-    background: #8e7bb3;
+    background: #1e2d4a;
 }
 
 .btn-mute {
