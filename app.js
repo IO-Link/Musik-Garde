@@ -212,14 +212,24 @@ class MusicPlayer {
             return;
         }
 
+        let addedCount = 0;
+        let skippedCount = 0;
+
         mp3Files.forEach(file => {
             const blobUrl = URL.createObjectURL(file);
             this.fileCache[file.name] = blobUrl;
             
-            // Save to IndexedDB
+            // Save to IndexedDB (also refreshes the stored file for existing tracks)
             if (this.db) {
                 this.saveFileToDB(file);
             }
+
+            // Skip files already in the playlist (also catches duplicates within this import)
+            if (this.playlist.some(t => t.filename === file.name)) {
+                skippedCount++;
+                return;
+            }
+            addedCount++;
             
             const track = {
                 filename: file.name,
@@ -238,6 +248,11 @@ class MusicPlayer {
         
         if (this.currentTrackIndex === 0 && !this.audioPlayer.src) {
             this.loadTrack(0);
+        }
+
+        if (skippedCount > 0) {
+            alert(`${addedCount} neue${addedCount === 1 ? 'r Titel' : ' Titel'} hinzugefügt, ` +
+                `${skippedCount} bereits vorhanden${skippedCount === 1 ? 'er' : 'e'} übersprungen.`);
         }
     }
 
