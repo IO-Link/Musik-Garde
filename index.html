@@ -22,7 +22,7 @@
             <div class="header-top">
                 <img src="./logo.png" alt="FV Vilseck" class="club-logo">
                 <div class="header-title">
-                    <h1>Musik Garde <span id="appVersion" class="app-version">v2.0.1</span></h1>
+                    <h1>Musik Garde <span id="appVersion" class="app-version">v2.0.2</span></h1>
                 </div>
             </div>
             <div id="updateNotification" class="update-notification" style="display: none;">
@@ -85,7 +85,10 @@
 
             <!-- Playlist Section -->
             <section class="playlist-section">
-                <h3>Playlist</h3>
+                <div class="playlist-header">
+                    <h3>Playlist</h3>
+                    <button class="btn-clear-all" id="clearAllBtn" title="Alle Lieder löschen" style="display: none;">🗑️ Alle löschen</button>
+                </div>
                 <div id="playlist" class="playlist">
                     <p class="empty-message">Keine Dateien importiert</p>
                 </div>

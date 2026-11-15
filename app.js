@@ -27,6 +27,7 @@ class MusicPlayer {
         this.volumeValue = document.getElementById('volumeValue');
         this.muteBtn = document.getElementById('muteBtn');
         this.playlistContainer = document.getElementById('playlist');
+        this.clearAllBtn = document.getElementById('clearAllBtn');
 
         this.isMuted = false;
         this.previousVolume = 70;
@@ -113,6 +114,7 @@ class MusicPlayer {
 
         this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
         this.muteBtn.addEventListener('click', () => this.toggleMute());
+        this.clearAllBtn.addEventListener('click', () => this.clearAllTracks());
 
         document.getElementById('autoplayToggle').addEventListener('change', (e) => {
             this.autoplay = e.target.checked;
@@ -348,6 +350,7 @@ class MusicPlayer {
     }
 
     renderPlaylist() {
+        this.clearAllBtn.style.display = this.playlist.length > 0 ? '' : 'none';
         if (this.playlist.length === 0) {
             this.playlistContainer.innerHTML = '<p class="empty-message">Keine Dateien importiert</p>';
             return;
@@ -489,6 +492,41 @@ class MusicPlayer {
             item.style.borderTop = '';
         });
         this.draggingIndex = null;
+    }
+
+    clearAllTracks() {
+        if (this.playlist.length === 0) return;
+        const count = this.playlist.length;
+        if (!confirm(`Alle ${count} Lieder aus der Playlist löschen?\n\nDie Dateien werden auch aus dem App-Speicher entfernt.`)) {
+            return;
+        }
+
+        this.stop();
+        this.audioPlayer.removeAttribute('src');
+        this.audioPlayer.load();
+
+        Object.values(this.fileCache).forEach(url => URL.revokeObjectURL(url));
+        this.fileCache = {};
+
+        if (this.db) {
+            try {
+                this.db.transaction(['files'], 'readwrite').objectStore('files').clear();
+            } catch (e) {
+                console.error('Error clearing DB:', e);
+            }
+        }
+
+        this.playlist = [];
+        this.currentTrackIndex = 0;
+        this.loadedTrackIndex = -1;
+
+        this.currentTitle.textContent = 'Keine Musik geladen';
+        document.getElementById('currentFilename').textContent = '';
+        this.duration.textContent = '0:00';
+
+        this.updateFileCount();
+        this.savePlaylistMetadataToStorage();
+        this.renderPlaylist();
     }
 
     deleteTrack(index) {
