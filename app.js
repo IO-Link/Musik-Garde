@@ -143,14 +143,72 @@ class MusicPlayer {
         });
     }
 
-    handleFileSelection(event) {
+    isMp3(name) {
+        return name.toLowerCase().endsWith('.mp3');
+    }
+
+    isZip(file) {
+        return file.name.toLowerCase().endsWith('.zip') ||
+            file.type === 'application/zip' || file.type === 'application/x-zip-compressed';
+    }
+
+    // Extract all MP3s from a ZIP file (including subfolders), sorted by path
+    async extractMp3sFromZip(zipFile) {
+        if (typeof JSZip === 'undefined') {
+            throw new Error('JSZip nicht geladen');
+        }
+        const zip = await JSZip.loadAsync(await zipFile.arrayBuffer());
+        const entries = Object.values(zip.files).filter(entry => {
+            if (entry.dir) return false;
+            const baseName = entry.name.split('/').pop();
+            // Skip macOS metadata and hidden files
+            if (entry.name.startsWith('__MACOSX/') || baseName.startsWith('.')) return false;
+            return this.isMp3(baseName);
+        });
+        entries.sort((a, b) => a.name.localeCompare(b.name, 'de', { numeric: true }));
+
+        const files = [];
+        for (const entry of entries) {
+            const data = await entry.async('uint8array');
+            const baseName = entry.name.split('/').pop();
+            const lastModified = entry.date ? entry.date.getTime() : Date.now();
+            files.push(new File([data], baseName, { type: 'audio/mpeg', lastModified }));
+        }
+        return files;
+    }
+
+    async handleFileSelection(event) {
         const files = Array.from(event.target.files);
-        const mp3Files = files.filter(file => 
-            file.type === 'audio/mpeg' || file.name.toLowerCase().endsWith('.mp3')
+        event.target.value = ''; // allow selecting the same file again
+        const mp3Files = files.filter(file =>
+            file.type === 'audio/mpeg' || this.isMp3(file.name)
         );
+        const zipFiles = files.filter(file => this.isZip(file));
+
+        if (zipFiles.length > 0) {
+            const originalLabel = this.selectFilesBtn.textContent;
+            this.selectFilesBtn.disabled = true;
+            this.selectFilesBtn.textContent = '⏳ Entpacke ZIP...';
+            for (const zipFile of zipFiles) {
+                try {
+                    const extracted = await this.extractMp3sFromZip(zipFile);
+                    if (extracted.length === 0) {
+                        alert(`"${zipFile.name}" enthält keine MP3-Dateien`);
+                    }
+                    mp3Files.push(...extracted);
+                } catch (err) {
+                    console.error('ZIP error:', zipFile.name, err);
+                    alert(`"${zipFile.name}" konnte nicht entpackt werden`);
+                }
+            }
+            this.selectFilesBtn.disabled = false;
+            this.selectFilesBtn.textContent = originalLabel;
+        }
 
         if (mp3Files.length === 0) {
-            alert('Bitte wählen Sie MP3-Dateien aus');
+            if (zipFiles.length === 0) {
+                alert('Bitte wählen Sie MP3- oder ZIP-Dateien aus');
+            }
             return;
         }
 
