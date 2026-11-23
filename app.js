@@ -361,6 +361,7 @@ class MusicPlayer {
             const displayText = artist ? (track.year ? `${artist} - ${track.title} - ${track.year}` : `${artist} - ${track.title}`) : track.title || track.filename;
             
             const filenameDisplay = track.filename.replace(/\.mp3$/i, '');
+            const showFilename = filenameDisplay.trim().toLowerCase() !== displayText.trim().toLowerCase();
             
             return `
                 <div class="playlist-item ${index === this.currentTrackIndex ? 'active' : ''}" 
@@ -370,7 +371,7 @@ class MusicPlayer {
                     <span class="playlist-item-number">${index + 1}</span>
                     <div class="playlist-item-content">
                         <span class="playlist-item-name">${displayText}</span>
-                        <span class="playlist-item-filename">${filenameDisplay}</span>
+                        ${showFilename ? `<span class="playlist-item-filename">${filenameDisplay}</span>` : ''}
                     </div>
                     ${index > 0 ? `<button class="playlist-item-up" data-index="${index}" title="Nach oben">▲</button>` : '<span style="width:24px;"></span>'}
                     ${index < this.playlist.length - 1 ? `<button class="playlist-item-down" data-index="${index}" title="Nach unten">▼</button>` : '<span style="width:24px;"></span>'}
@@ -617,7 +618,8 @@ class MusicPlayer {
         const displayText = artist ? (track.year ? `${artist} - ${track.title} - ${track.year}` : `${artist} - ${track.title}`) : track.title || track.filename;
         const filenameDisplay = track.filename.replace(/\.mp3$/i, '');
         this.currentTitle.textContent = displayText;
-        document.getElementById('currentFilename').textContent = filenameDisplay;
+        const same = filenameDisplay.trim().toLowerCase() === displayText.trim().toLowerCase();
+        document.getElementById('currentFilename').textContent = same ? '' : filenameDisplay;
     }
 
     updatePlaylistUI() {

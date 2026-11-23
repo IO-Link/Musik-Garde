@@ -1,5 +1,5 @@
 // Service Worker - Musik Garde PWA
-const CACHE_NAME = 'musik-garde-v2.0.2';
+const CACHE_NAME = 'musik-garde-v2.0.3';
 const urlsToCache = [
     './',
     './index.html',

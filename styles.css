@@ -31,8 +31,8 @@ body {
 /* ===== HEADER ===== */
 header {
     text-align: center;
-    margin-bottom: 20px;
-    padding: 15px 0;
+    margin-bottom: 8px;
+    padding: 4px 0;
 }
 
 .update-notification {
@@ -55,12 +55,15 @@ header {
 .header-top {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 15px;
-    margin-bottom: 5px;
+    margin-bottom: 0;
+    position: relative;
 }
 
 .club-logo {
+    position: absolute;
+    left: 0;
     width: 70px;
     height: 70px;
     border-radius: 0;
@@ -85,7 +88,7 @@ header {
 header h1 {
     font-size: 28px;
     font-weight: bold;
-    color: var(--primary);
+    color: #fff;
 }
 
 .app-version {
@@ -295,7 +298,8 @@ header h1 {
 }
 
 .song-info h2 {
-    font-size: 16px;
+    font-size: 20px;
+    line-height: 1.2;
     font-weight: 600;
     margin-bottom: 5px;
     color: var(--primary);
@@ -528,7 +532,8 @@ header h1 {
     font-weight: 600;
     color: var(--light);
     word-break: break-word;
-    font-size: 13px;
+    font-size: 16px;
+    line-height: 1.2;
 }
 
 .playlist-item-filename {
