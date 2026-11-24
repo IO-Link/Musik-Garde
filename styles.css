@@ -381,6 +381,35 @@ header h1 {
     border: none;
 }
 
+/* Time markers every 30 s. --pos is 0..1; 11px = half the slider thumb. */
+.progress-ticks {
+    position: relative;
+    height: 22px;
+    margin-top: 8px;
+    pointer-events: none;
+}
+
+.progress-tick {
+    position: absolute;
+    top: 0;
+    left: calc(11px + (100% - 22px) * var(--pos));
+    width: 1px;
+    height: 5px;
+    background: rgba(224, 224, 224, 0.5);
+}
+
+.progress-tick-label {
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--light);
+    opacity: 0.7;
+}
+
 /* ===== CONTROLS ===== */
 .controls {
     display: grid;

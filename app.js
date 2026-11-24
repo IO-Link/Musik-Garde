@@ -18,6 +18,7 @@ class MusicPlayer {
         this.currentTime = document.getElementById('currentTime');
         this.duration = document.getElementById('duration');
         this.progressBar = document.getElementById('progressBar');
+        this.progressTicks = document.getElementById('progressTicks');
         this.playBtn = document.getElementById('playBtn');
         this.pauseBtn = document.getElementById('pauseBtn');
         this.stopBtn = document.getElementById('stopBtn');
@@ -127,6 +128,7 @@ class MusicPlayer {
 
         this.audioPlayer.addEventListener('timeupdate', () => this.updateProgressBar());
         this.audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
+        window.addEventListener('resize', () => this.renderProgressTicks());
         this.audioPlayer.addEventListener('ended', () => {
             if (this.autoplay) {
                 // Auto-advance to next track and play
@@ -527,6 +529,7 @@ class MusicPlayer {
         this.currentTitle.textContent = 'Keine Musik geladen';
         document.getElementById('currentFilename').textContent = '';
         this.duration.textContent = '0:00';
+        if (this.progressTicks) this.progressTicks.textContent = '';
 
         this.updateFileCount();
         this.savePlaylistMetadataToStorage();
@@ -765,6 +768,38 @@ class MusicPlayer {
 
     updateDuration() {
         this.duration.textContent = this.formatTime(this.audioPlayer.duration);
+        this.renderProgressTicks();
+    }
+
+    // Marks every 30 seconds below the progress bar. Labels are thinned out
+    // (every 30/60/120/... s) so they never overlap on narrow screens.
+    renderProgressTicks() {
+        const container = this.progressTicks;
+        if (!container) return;
+        const total = this.audioPlayer.duration;
+        container.textContent = '';
+        if (!Number.isFinite(total) || total <= 0) return;
+
+        const TICK_INTERVAL = 30;
+        const MIN_LABEL_GAP_PX = 36;
+        const usableWidth = Math.max(1, container.clientWidth - 22); // minus slider thumb width
+        const pxPerInterval = (usableWidth / total) * TICK_INTERVAL;
+        const labelEvery = Math.max(1, Math.ceil(MIN_LABEL_GAP_PX / pxPerInterval));
+
+        const fragment = document.createDocumentFragment();
+        for (let i = 0, t = 0; t < total; i++, t += TICK_INTERVAL) {
+            const tick = document.createElement('span');
+            tick.className = 'progress-tick';
+            tick.style.setProperty('--pos', t / total);
+            if (i % labelEvery === 0) {
+                const label = document.createElement('span');
+                label.className = 'progress-tick-label';
+                label.textContent = this.formatTime(t);
+                tick.appendChild(label);
+            }
+            fragment.appendChild(tick);
+        }
+        container.appendChild(fragment);
     }
 
     resetProgressBar() {
