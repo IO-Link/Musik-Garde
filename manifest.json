@@ -1,6 +1,6 @@
 {
-  "name": "Musik Garde - MP3 Player",
-  "short_name": "Musik Garde",
+  "name": "FV Vilseck Garde - Musikplayer",
+  "short_name": "FV Vilseck Garde",
   "description": "Lokaler MP3 Musik-Player für dein Smartphone",
   "start_url": "/Musik-Garde/",
   "scope": "/Musik-Garde/",
