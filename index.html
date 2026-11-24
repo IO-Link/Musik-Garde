@@ -22,7 +22,7 @@
             <div class="header-top">
                 <img src="./logo.png" alt="FV Vilseck" class="club-logo">
                 <div class="header-title">
-                    <h1>Musik Garde <span id="appVersion" class="app-version">v2.0.3</span></h1>
+                    <h1>Musik Garde <span id="appVersion" class="app-version">v3.0.0</span></h1>
                 </div>
             </div>
             <div id="updateNotification" class="update-notification" style="display: none;">
@@ -62,6 +62,8 @@
                 </div>
             </section>
 
+            <!-- Spectrum Analyzer -->
+            <canvas id="spectrumCanvas" class="spectrum" aria-label="Spektrumanalysator"></canvas>
             <!-- Progress Bar -->
             <div class="progress-container">
                 <input type="range" id="progressBar" min="0" max="100" value="0" class="progress-bar">
@@ -101,6 +103,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/jsmediatags@3.9.5/dist/jsmediatags.min.js"></script>
     <script src="./jszip.min.js"></script>
+    <script src="spectrum.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

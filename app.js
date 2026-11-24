@@ -35,6 +35,7 @@ class MusicPlayer {
         this.db = null;
         this.loadedTrackIndex = -1; // Track which song is loaded in audio
         this.wakeLock = null;
+        this.spectrum = new SpectrumAnalyzer(this.audioPlayer, document.getElementById('spectrumCanvas'));
 
         this.init();
     }
@@ -138,10 +139,12 @@ class MusicPlayer {
         this.audioPlayer.addEventListener('play', () => {
             this.isPlaying = true;
             this.updatePlayButton();
+            this.spectrum.start();
         });
         this.audioPlayer.addEventListener('pause', () => {
             this.isPlaying = false;
             this.updatePlayButton();
+            this.spectrum.stop();
         });
     }
 
